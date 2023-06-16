@@ -1,5 +1,5 @@
 use axum::{response::IntoResponse, routing::get, Json, Router};
-
+mod config;
 pub async fn health_checker_handler() -> impl IntoResponse {
     let json_response = serde_json::json!({
         "status": "success",
