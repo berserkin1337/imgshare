@@ -1,17 +1,20 @@
 use std::sync::Arc;
 
-use axum::{response::IntoResponse, routing::get, Json, Router};
-use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
-
 use crate::config::Config;
+use axum::{response::IntoResponse, routing::get, Json, Router};
+use dotenv::dotenv;
+use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
 mod config;
-
+mod jwt_auth;
+mod model;
+mod response;
 pub struct AppState {
     db: Pool<Postgres>,
     env: Config,
 }
 #[tokio::main]
 async fn main() {
+    dotenv().ok();
     let config = Config::init();
     let pool = match PgPoolOptions::new()
         .max_connections(10)
