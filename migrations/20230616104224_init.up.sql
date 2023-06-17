@@ -6,8 +6,8 @@ CREATE TABLE users (
     username VARCHAR(255) NOT NULL UNIQUE,
     email VARCHAR(255) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 CREATE INDEX users_email_idx ON users (email);
@@ -16,6 +16,6 @@ CREATE INDEX users_email_idx ON users (email);
 CREATE TABLE images (
     id UUID NOT NULL PRIMARY KEY DEFAULT (uuid_generate_v4()),
     user_id UUID NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     constraint fk_user_id FOREIGN KEY(user_id) REFERENCES users(id)
 );

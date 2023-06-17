@@ -30,7 +30,7 @@ pub struct TokenClaims {
 
 #[derive(Debug, Deserialize)]
 pub struct RegisterUserSchema {
-    pub name: String,
+    pub username: String,
     pub email: String,
     pub password: String,
 }

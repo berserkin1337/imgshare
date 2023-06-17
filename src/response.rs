@@ -5,7 +5,7 @@ use serde::Serialize;
 #[derive(Debug, Serialize)]
 pub struct FilteredUser {
     pub id: String,
-    pub name: String,
+    pub username: String,
     pub email: String,
     pub createdAt: DateTime<Utc>,
     pub updatedAt: DateTime<Utc>,
