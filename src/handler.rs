@@ -1,14 +1,14 @@
 use std::sync::Arc;
 
 use crate::{
-    model::{LoginUserSchema, RegisterUserSchema, TokenClaims, User},
+    model::{LoginUserSchema, RegisterUserSchema, TokenClaims, User,ImgBody},
     response::FilteredUser,
     AppState,
 };
 use argon2::{password_hash::SaltString, Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use axum::{
-    extract::State,
-    http::{header, Response, StatusCode},
+    extract::{State},
+    http::{header, Response, StatusCode, Request},
     response::IntoResponse,
     Extension, Json,
 };
@@ -191,3 +191,17 @@ pub async fn health_checker_handler() -> impl IntoResponse {
 
     Json(json_response)
 }
+
+
+#[allow(dead_code,unused_variables)]
+pub async fn image_upload_handler <B> (
+    Extension(user): Extension<User>,
+    Json(body): Json<ImgBody>,
+    request : Request<B>
+) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    // 
+    // TODO: Implement file verification that it is 
+    // let mimetype = request.
+    Ok(())  
+}
+ 
