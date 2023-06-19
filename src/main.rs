@@ -1,19 +1,15 @@
-use std::sync::Arc;
-
 use crate::config::Config;
 use axum::http::{
     header::{ACCEPT, AUTHORIZATION, CONTENT_TYPE},
     HeaderValue, Method,
 };
-use axum::{
-    extract::MatchedPath,
-    http::{ Request},
-    response::{ Response},
-};
+use axum::{extract::MatchedPath, http::Request, response::Response};
 use dotenv::dotenv;
 use sqlx::{postgres::PgPoolOptions, Pool, Postgres};
+use std::sync::Arc;
 use std::time::Duration;
-use tower_http::{ cors::CorsLayer, trace::TraceLayer};
+use tokio::signal;
+use tower_http::{cors::CorsLayer, trace::TraceLayer};
 use tracing::{
     info_span,
     log::{debug, info},
@@ -32,14 +28,14 @@ pub struct AppState {
     env: Config,
 }
 #[tokio::main]
-async fn main()  {
+async fn main() {
     dotenv().ok();
     tracing_subscriber::registry()
         .with(
             tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
                 // axum logs rejections from built-in extractors with the `axum::rejection`
                 // target, at `TRACE` level. `axum::rejection=trace` enables showing those events
-                "img_sharing=debug,tower_http=debug,axum::rejection=trace".into()
+                "img_sharing=debug,tower_http=debug,axum::rejection=debug".into()
             }),
         )
         .with(tracing_subscriber::fmt::layer())
@@ -100,7 +96,7 @@ async fn main()  {
             .on_response(|_response: &Response, _latency: Duration, _span: &Span| {
                 //
                 info!("response received : {:?}", _response.status());
-            })
+            }),
     )
     .layer(cors);
 
@@ -108,7 +104,33 @@ async fn main()  {
     info!("🚀 Server running at http://{}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
+        .with_graceful_shutdown(shutdown_signal())
         .await
         .unwrap();
-    
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
+
+    println!("signal received, starting graceful shutdown");
 }

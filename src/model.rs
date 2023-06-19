@@ -14,7 +14,7 @@ pub struct User {
 }
 
 #[derive(Debug, Deserialize, sqlx::FromRow, Serialize, Clone)]
-pub struct Images {
+pub struct Image {
     pub id: uuid::Uuid,
     pub user_id: uuid::Uuid,
     #[serde(rename = "createdAt")]
@@ -43,5 +43,5 @@ pub struct LoginUserSchema {
 
 #[derive(Debug, Deserialize)]
 pub struct ImgBody {
-   pub image : Vec<u8> 
+    pub image: Vec<u8>,
 }
