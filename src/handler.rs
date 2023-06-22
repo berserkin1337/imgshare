@@ -8,18 +8,18 @@ use crate::{
 use argon2::{password_hash::SaltString, Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use axum::{
     extract::State,
-    http::{header, Request, Response, StatusCode},
+    http::{header, Response, StatusCode},
     response::IntoResponse,
-    Extension, Form, Json,
+    Extension, Json,
 };
 use axum_extra::extract::cookie::{Cookie, SameSite};
-use image::ImageOutputFormat;
+use axum_typed_multipart::TypedMultipart;
 use jsonwebtoken::{encode, EncodingKey, Header};
 use rand_core::OsRng;
 use serde_json::json;
 use sqlx::{query_as, query_scalar};
 use tokio::fs::File;
-use tokio::io::{self, AsyncWriteExt};
+use tokio::io::AsyncWriteExt;
 use tracing::info;
 fn filter_user_record(user: &User) -> FilteredUser {
     FilteredUser {
@@ -198,18 +198,17 @@ pub async fn health_checker_handler() -> impl IntoResponse {
 pub async fn image_upload_handler(
     State(data): State<Arc<AppState>>,
     Extension(user): Extension<User>,
-    Form(body): Form<ImgBody>,
+    TypedMultipart(ImgBody { img }): TypedMultipart<ImgBody>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
     //TODO: Make this work asynchrounously
     // as of now, this is blocking the event loop
-    // because we are loading body.image into memory
-    // and then checking its size
+    // because we are loading body.image into memory directly
+    info!("Inside the image_upload_handler");
 
-    // check whether image is valid
-    let image = match image::load_from_memory(&body.image) {
+    let image = match image::load_from_memory(&img) {
         Ok(image) => image,
-        Err(_) => {
-            info!("invalid image for user {}", user.id);
+        Err(e) => {
+            info!("invalid image for user {} with error {e}", user.id);
             let error_response = json!({
                 "status" : "fail",
                 "message" : "Invalid image",
@@ -217,13 +216,14 @@ pub async fn image_upload_handler(
             return Err((StatusCode::BAD_REQUEST, Json(error_response)));
         }
     };
-    // insert the image into database
-    //TODO: Make this work asynchrounously
     let mut cursor = Cursor::new(Vec::new());
     image
         .write_to(&mut cursor, image::ImageOutputFormat::WebP)
         .map_err(|e| {
-            info!("Can't convert image to webp for user: {}", user.id);
+            info!(
+                "Can't convert image to webp for user: {} with error {e}",
+                user.id
+            );
             let error_response = json!({
                 "status" : "fail",
                 "message" : "Internal server error",
@@ -238,7 +238,10 @@ pub async fn image_upload_handler(
     .fetch_one(&data.db)
     .await
     .map_err(|e| {
-        info!("Can't insert image into database for user: {}", user.id);
+        info!(
+            "Can't insert image into database for user: {} with error {e}",
+            user.id
+        );
         let error_response = json!({
             "status" : "fail",
             "message" : "Internal server error",
@@ -246,18 +249,25 @@ pub async fn image_upload_handler(
         (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
     })?;
 
-    let mut file_name = format!("{}.webp", img.id);
+    let file_name = format!("{}.webp", img.id);
     //write the file to disk
-    let mut file = File::create(format!("uploads/{}", file_name))
-        .await
-        .map_err(|e| {
-            info!("Can't create file for user: {}", user.id);
+    let file = File::create(format!("uploads/{}", file_name)).await;
+
+    let mut file = match file {
+        Ok(file) => file,
+        Err(e) => {
+            info!("Can't create file for user: {} with error:{:?}", user.id, e);
+            let _ = sqlx::query!("DELETE FROM images WHERE id = $1", img.id)
+                .execute(&data.db)
+                .await;
+
             let error_response = json!({
                 "status" : "fail",
                 "message" : "Internal server error",
             });
-            (StatusCode::INTERNAL_SERVER_ERROR, Json(error_response))
-        })?;
+            return Err((StatusCode::INTERNAL_SERVER_ERROR, Json(error_response)));
+        }
+    };
 
     let vec = cursor.get_ref();
 

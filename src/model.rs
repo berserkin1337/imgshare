@@ -1,6 +1,7 @@
 use chrono::prelude::*;
 use serde::{Deserialize, Serialize};
-
+use axum::body::Bytes;
+use axum_typed_multipart::TryFromMultipart;
 #[derive(Debug, Deserialize, sqlx::FromRow, Serialize, Clone)]
 pub struct User {
     pub id: uuid::Uuid,
@@ -41,7 +42,7 @@ pub struct LoginUserSchema {
     pub password: String,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, TryFromMultipart)]
 pub struct ImgBody {
-    pub image: Vec<u8>,
+    pub img: Bytes,
 }

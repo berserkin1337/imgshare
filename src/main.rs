@@ -10,16 +10,13 @@ use std::sync::Arc;
 use std::time::Duration;
 use tokio::signal;
 use tower_http::{cors::CorsLayer, trace::TraceLayer};
-use tracing::{
-    info_span,
-    log::{debug, info},
-    Span,
-};
+use tracing::{info_span, log::info, Span};
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 mod config;
 mod handler;
 mod jwt_auth;
+mod methods;
 mod model;
 mod response;
 mod route;
@@ -71,8 +68,6 @@ async fn main() {
     .layer(
         TraceLayer::new_for_http()
             .make_span_with(|request: &Request<_>| {
-                // Log the matched route's path (with placeholders not filled in).
-                // Use request.uri() or OriginalUri if you want the real path.
                 let matched_path = request
                     .extensions()
                     .get::<MatchedPath>()
@@ -86,10 +81,6 @@ async fn main() {
                 )
             })
             .on_request(|_request: &Request<_>, _span: &Span| {
-                // You can use `_span.record("some_other_field", value)` in one of these
-                // closures to attach a value to the initially empty field in the info_span
-                // created above.
-                // what should be done when a request is received
                 info!("Request  body:- ");
                 info!("{:?}", _request.body());
             })
@@ -128,8 +119,12 @@ async fn shutdown_signal() {
     let terminate = std::future::pending::<()>();
 
     tokio::select! {
-        _ = ctrl_c => {},
-        _ = terminate => {},
+        _ = ctrl_c => {
+            println!("Ctrl+C received, exiting");
+        },
+        _ = terminate => {
+            println!("SIGTERM received, exiting");
+        },
     }
 
     println!("signal received, starting graceful shutdown");
