@@ -3,7 +3,11 @@
 
 <head>
     <title>imgshare</title>
-    <link rel="stylesheet" href="/styles.css">
+    <link rel="apple-touch-icon" sizes="180x180" href="/assets/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
+    <link rel="manifest" href="/assets/site.webmanifest">
+    <link rel="stylesheet" href="/assets/styles.css">
 </head>
 
 <body>
@@ -14,7 +18,13 @@
                 <li><a href="/">Home</a></li>
                 <li><a href="/upload">Upload</a></li>
                 <li><a href="/dashboard">Dashboard</a></li>
-                <li><a href="/logout">Logout</a></li>
+                <!-- Check if user is logged in  and display different stuff here based on that -->
+                {% if base.is_logged_in -%}
+                <li><a href="/api/logout">Logout</a></li>
+                {% else -%}
+                <li><a href="/login">Login</a></li>
+                <li><a href="/register">Register</a></li>
+                {% endif -%}
             </ul>
         </div>
     </nav>

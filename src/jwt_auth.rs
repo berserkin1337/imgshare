@@ -97,3 +97,66 @@ pub async fn auth<B>(
 
     Ok(next.run(req).await)
 }
+
+pub async fn check_login<B>(
+    cookie_jar: CookieJar,
+    State(data): State<Arc<AppState>>,
+    mut req: Request<B>,
+    next: Next<B>,
+) -> impl IntoResponse {
+    let token = cookie_jar
+        .get("token")
+        .map(|cookie| cookie.value().to_string())
+        .or_else(|| {
+            req.headers()
+                .get(header::AUTHORIZATION)
+                .and_then(|auth_header| auth_header.to_str().ok())
+                .and_then(|auth_value| {
+                    // if auth_value.starts_with("Bearer ") {
+                    //     Some(auth_value[7..].to_owned())
+                    auth_value
+                        .strip_prefix("Bearer ")
+                        .map(|auth_val| auth_val.to_owned())
+                })
+        });
+
+    if token.is_none() {
+        req.extensions_mut().insert(false);
+        return next.run(req).await;
+    }
+
+    let token = token.unwrap();
+    let claims = decode::<TokenClaims>(
+        &token,
+        &DecodingKey::from_secret(data.env.jwt_secret.as_ref()),
+        &Validation::default(),
+    );
+
+    if claims.is_err() {
+        req.extensions_mut().insert(false);
+        return next.run(req).await;
+    }
+    let claims = claims.unwrap().claims;
+    let user_id = uuid::Uuid::parse_str(&claims.sub);
+    if user_id.is_err() {
+        req.extensions_mut().insert(false);
+        return next.run(req).await;
+    }
+    let user_id = user_id.unwrap();
+    let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
+        .bind(user_id)
+        .fetch_optional(&data.db)
+        .await;
+    if user.is_err() {
+        req.extensions_mut().insert(false);
+        return next.run(req).await;
+    }
+    let user = user.unwrap();
+    if user.is_none() {
+        req.extensions_mut().insert(false);
+        return next.run(req).await;
+    }
+    let user = user.unwrap();
+    req.extensions_mut().insert(true);
+    next.run(req).await
+}

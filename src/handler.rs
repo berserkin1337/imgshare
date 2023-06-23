@@ -20,7 +20,7 @@ use serde_json::json;
 use sqlx::{query_as, query_scalar};
 use tokio::fs::File;
 use tokio::io::AsyncWriteExt;
-use tracing::info;
+use tracing::{debug, info};
 fn filter_user_record(user: &User) -> FilteredUser {
     FilteredUser {
         id: user.id.to_string(),
@@ -97,6 +97,7 @@ pub async fn login_user_handler(
     State(data): State<Arc<AppState>>,
     Json(body): Json<LoginUserSchema>,
 ) -> Result<impl IntoResponse, (StatusCode, Json<serde_json::Value>)> {
+    debug!("Login user handler called");
     let user = sqlx::query_as!(
         User,
         "SELECT * FROM users WHERE email = $1",
