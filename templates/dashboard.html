@@ -1,13 +1,15 @@
-{% extends "base.html" %}
-
-{% block content %}
+{% extends "base.html" %} {% block content %}
 <h1>Welcome, {{ username }}!</h1>
 <h2>My Images</h2>
+{%if images.len() != 0 %}
 <ul>
     {% for image in images %}
     <li>
-        <img src="{{ image.url }}" alt="{{ image.title }}">
+        <img src="{{ image.url }}" />
     </li>
     {% endfor %}
 </ul>
+{% else %}
+<p>You have no images.</p>
+{% endif %}
 {% endblock %}

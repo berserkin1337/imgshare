@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Image Upload</h1>
+<form id="uploadForm">
+    <label for="imageInput">Select an image (GIF, JPEG, PNG, JPG, WebP, SVG, APNG, AVIF, BMP):</label>
+    <input type="file" name="img"
+        accept="image/gif, image/jpeg, image/png, image/jpg, image/webp, image/svg+xml, image/apng, image/avif, image/bmp"
+        required>
+    <button type="submit">Upload</button>
+</form>
+
+<div id="message"></div>
+<div id="uploadedImageSection">
+    <!-- The section to display the uploaded image's URL -->
+</div>
+<script src="/assets/upload.js"></script>
+{% endblock %}

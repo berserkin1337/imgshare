@@ -2,10 +2,49 @@
 
 {% block content %}
 <h1>Register</h1>
-<form id="registerForm" action="/api/register" method="POST">
+<form id="registerForm" action="/api/auth/register" method="POST">
     <input type="text" name="username" placeholder="Username" required>
     <input type="email" name="email" placeholder="Email" required>
     <input type="password" name="password" placeholder="Password" required>
+    <input type="password" name="confirm_password" placeholder="Confirm Password" required>
     <button type="submit">Register</button>
+    <div id="message"></div>
 </form>
+<script>
+    const registerForm = document.getElementById("registerForm");
+    registerForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        // get the password and confirm password values
+        const password = registerForm.password.value;
+        const confirmPassword = registerForm.confirm_password.value;
+        // check if the passwords match
+        if (password !== confirmPassword) {
+            message.innerHTML = "Passwords do not match.";
+            return;
+        }
+        // create a new URLSearchParams object
+        const formData = new URLSearchParams(new FormData(registerForm));
+        // send a fetch request to /api/auth/register with the form data
+        const response = await fetch("/api/auth/register", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
+            body: formData,
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+            if (data.status === "success") {
+                const token = data.jwt_token;
+                // Handle successful sign-in (e.g., redirect to dashboard)
+                // Show a  message  saying successful registration 
+                message.innerHTML = "<span>Registration successful. Please sign in.</span>";
+                // show a link to the sign in page
+                message.innerHTML += `<br><a href="/signin">Sign In</a>`;
+            }
+        }
+        message.innerHTML = `<span>${data.message}</span>`;
+    })
+</script>
 {% endblock %}

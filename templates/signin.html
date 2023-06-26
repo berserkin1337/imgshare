@@ -2,7 +2,7 @@
 
 {% block content %}
 <h1>Sign In</h1>
-<form id="signinForm" action="/api/login" method="POST">
+<form id="signinForm" action="/api/auth/login" method="POST">
     <input type="text" name="email" placeholder="Email" required>
     <input type="password" name="password" placeholder="Password" required>
     <button type="submit">Sign In</button>
@@ -15,25 +15,22 @@
     signinForm.addEventListener("submit", async (e) => {
         e.preventDefault();
 
-        const formData = new FormData(signinForm);
+        const formData = new URLSearchParams(new FormData(signinForm));
         const response = await fetch("/api/auth/login", {
             method: "POST",
+            headers: {
+                "Content-Type": "application/x-www-form-urlencoded",
+            },
             body: formData,
         });
 
-        if (response.ok) {
-            const data = await response.json();
-
-            if (data.status === "success") {
-                const token = data.jwt_token;
-                // Handle successful sign-in (e.g., redirect to dashboard)
-                window.location.href = "/";
-            } else {
-                message.innerHTML = "Sign in failed. Please try again.";
-            }
-        } else {
-            message.innerHTML = "Error occurred. Please try again later.";
+        const data = await response.json();
+        if (response.ok && data.status === "success") {
+            const token = data.jwt_token;
+            // Handle successful sign-in (e.g., redirect to dashboard)
+            window.location.href = "/";
         }
+        message.innerHTML = `<span>${data.message}</span>`;
     });
 </script>
 {% endblock %}

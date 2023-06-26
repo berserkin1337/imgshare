@@ -11,6 +11,7 @@ use axum::{
 use axum_extra::extract::cookie::CookieJar;
 use jsonwebtoken::{decode, DecodingKey, Validation};
 use serde::Serialize;
+use tracing::info;
 
 use crate::{
     model::{TokenClaims, User},
@@ -121,6 +122,7 @@ pub async fn check_login<B>(
         });
 
     if token.is_none() {
+        info!("Not logged in");
         req.extensions_mut().insert(false);
         return next.run(req).await;
     }
@@ -156,7 +158,8 @@ pub async fn check_login<B>(
         req.extensions_mut().insert(false);
         return next.run(req).await;
     }
-    let user = user.unwrap();
+    // let user = user.unwrap();
     req.extensions_mut().insert(true);
+    dbg!("user is logged in ");
     next.run(req).await
 }

@@ -9,6 +9,8 @@ use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 mod config;
 mod handler;
 mod jwt_auth;
+mod layers;
+mod logbody;
 mod methods;
 mod model;
 mod response;
@@ -19,34 +21,34 @@ pub struct AppState {
 }
 #[tokio::main]
 async fn main() {
-    // dotenv().ok();
-    // tracing_subscriber::registry()
-    //     .with(
-    //         tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
-    //             // axum logs rejections from built-in extractors with the `axum::rejection`
-    //             // target, at `TRACE` level. `axum::rejection=trace` enables showing those events
-    //             "img_sharing=debug,tower_http=debug,axum::rejection=debug".into()
-    //         }),
-    //     )
-    //     .with(tracing_subscriber::fmt::layer())
-    //     .init();
+    dotenv().ok();
+    tracing_subscriber::registry()
+        .with(
+            tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+                // axum logs rejections from built-in extractors with the `axum::rejection`
+                // target, at `TRACE` level. `axum::rejection=trace` enables showing those events
+                "img_sharing=debug,tower_http=debug,axum::rejection=debug".into()
+            }),
+        )
+        .with(tracing_subscriber::fmt::layer())
+        .init();
 
-    // let config = Config::init();
+    let config = Config::init();
 
-    // let pool = match PgPoolOptions::new()
-    //     .max_connections(10)
-    //     .connect(&config.database_url)
-    //     .await
-    // {
-    //     Ok(pool) => {
-    //         // info!("🐘 Connected to the database");
-    //         pool
-    //     }
-    //     Err(err) => {
-    //         // info!("🔥 Failed to connect to the database: {:?}", err);
-    //         std::process::exit(1);
-    //     }
-    // };
+    let pool = match PgPoolOptions::new()
+        .max_connections(10)
+        .connect(&config.database_url)
+        .await
+    {
+        Ok(pool) => {
+            info!("🐘 Connected to the database");
+            pool
+        }
+        Err(err) => {
+            info!("🔥 Failed to connect to the database: {:?}", err);
+            std::process::exit(1);
+        }
+    };
 
     // let cors = CorsLayer::new()
     //     .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
@@ -54,43 +56,46 @@ async fn main() {
     //     .allow_credentials(true)
     //     .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE]);
 
-    let app = create_router();
+    let app = create_router(Arc::new(AppState {
+        db: pool,
+        env: config,
+    }));
 
     let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
-    // info!("🚀 Server running at http://{}", addr);
+    info!("🚀 Server running at http://{}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())
-        // .with_graceful_shutdown(shutdown_signal())
+        .with_graceful_shutdown(shutdown_signal())
         .await
         .unwrap();
 }
 
-// async fn shutdown_signal() {
-//     let ctrl_c = async {
-//         signal::ctrl_c()
-//             .await
-//             .expect("failed to install Ctrl+C handler");
-//     };
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
 
-//     #[cfg(unix)]
-//     let terminate = async {
-//         signal::unix::signal(signal::unix::SignalKind::terminate())
-//             .expect("failed to install signal handler")
-//             .recv()
-//             .await;
-//     };
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("failed to install signal handler")
+            .recv()
+            .await;
+    };
 
-//     #[cfg(not(unix))]
-//     let terminate = std::future::pending::<()>();
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
 
-//     tokio::select! {
-//         _ = ctrl_c => {
-//             println!("Ctrl+C received, exiting");
-//         },
-//         _ = terminate => {
-//             println!("SIGTERM received, exiting");
-//         },
-//     }
+    tokio::select! {
+        _ = ctrl_c => {
+            println!("Ctrl+C received, exiting");
+        },
+        _ = terminate => {
+            println!("SIGTERM received, exiting");
+        },
+    }
 
-//     println!("signal received, starting graceful shutdown");
-// }
+    println!("signal received, starting graceful shutdown");
+}
