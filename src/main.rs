@@ -21,6 +21,15 @@ pub struct AppState {
 }
 #[tokio::main]
 async fn main() {
+    //make a directory ./uploads if it does not exist
+    match std::fs::read_dir("./uploads") {
+        Ok(_) => (),
+        Err(_) => {
+            std::fs::create_dir("./uploads").unwrap();
+        }
+    }
+
+    // set up logging
     dotenv().ok();
     tracing_subscriber::registry()
         .with(
@@ -56,12 +65,12 @@ async fn main() {
     //     .allow_credentials(true)
     //     .allow_headers([AUTHORIZATION, ACCEPT, CONTENT_TYPE]);
 
+    let addr = SocketAddr::from(([127, 0, 0, 1], config.port));
     let app = create_router(Arc::new(AppState {
         db: pool,
         env: config,
     }));
 
-    let addr = SocketAddr::from(([127, 0, 0, 1], 8080));
     info!("🚀 Server running at http://{}", addr);
     axum::Server::bind(&addr)
         .serve(app.into_make_service())

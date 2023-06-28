@@ -7,32 +7,63 @@
     <link rel="icon" type="image/png" sizes="32x32" href="/assets/favicon-32x32.png">
     <link rel="icon" type="image/png" sizes="16x16" href="/assets/favicon-16x16.png">
     <link rel="manifest" href="/assets/site.webmanifest">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@0.9.4/css/bulma.min.css">
     <link rel="stylesheet" href="/assets/styles.css">
 </head>
 
 <body>
-    <nav class="navbar">
+    <nav class="navbar" role="navigation" aria-label="main navigation">
         <div class="container">
-            <a class="navbar__logo" href="/">Imgshare</a>
-            <ul class="navbar__menu">
-                <li><a href="/">Home</a></li>
-                <!-- Check if user is logged in  and display different stuff here based on that -->
-                {% if base.is_logged_in -%}
-                <li><a href="/api/auth/logout">Logout</a></li>
-                <li><a href="/upload">Upload</a></li>
-                <li><a href="/dashboard">Dashboard</a></li>
-                {% else -%}
-                <li><a href="/login">Login</a></li>
-                <li><a href="/register">Register</a></li>
-                {% endif -%}
-            </ul>
+            <div class="navbar-brand">
+                <a class="navbar-item" href="/">Imgshare</a>
+                <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false" data-target="navbarMenu">
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                    <span aria-hidden="true"></span>
+                </a>
+            </div>
+
+            <div id="navbarMenu" class="navbar-menu">
+                <div class="navbar-end">
+                    <a class="navbar-item" href="/">Home</a>
+                    {% if base.is_logged_in -%}
+                    <a class="navbar-item" href="/api/auth/logout">Logout</a>
+                    <a class="navbar-item" href="/upload">Upload</a>
+                    <a class="navbar-item" href="/dashboard">Dashboard</a>
+                    {% else -%}
+                    <div>
+                        <div class="navbar-item">
+                            <div class="buttons">
+                                <a class="button is-primary" href="/register">Register</a>
+                                <a class="button is-light" href="/login">Login</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif -%}
+                </div>
+            </div>
         </div>
     </nav>
 
-    <div class="content">
-        {% block content %}
-        {% endblock %}
+    <div class="container">
+        <div class="content">
+            {% block content %}
+            {% endblock %}
+        </div>
     </div>
+
+    <script>
+        // Toggle the responsive navbar menu
+        document.addEventListener('DOMContentLoaded', function () {
+            var burger = document.querySelector('.navbar-burger');
+            var menu = document.querySelector('.navbar-menu');
+
+            burger.addEventListener('click', function () {
+                burger.classList.toggle('is-active');
+                menu.classList.toggle('is-active');
+            });
+        });
+    </script>
 </body>
 
 </html>

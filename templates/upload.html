@@ -1,18 +1,33 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Image Upload</h1>
-<form id="uploadForm">
-    <label for="imageInput">Select an image (GIF, JPEG, PNG, JPG, WebP, SVG, APNG, AVIF, BMP):</label>
-    <input type="file" name="img"
-        accept="image/gif, image/jpeg, image/png, image/jpg, image/webp, image/svg+xml, image/apng, image/avif, image/bmp"
-        required>
-    <button type="submit">Upload</button>
-</form>
+<section class="section">
+    <div class="container">
+        <h1 class="title  has-text-centered">Image Upload</h1>
+        <div class="box">
+            <form id="uploadForm">
+                <div class="field">
+                    <label class="label" for="imageInput">Select an image (GIF, JPEG, PNG, JPG, WebP, SVG, APNG, AVIF,
+                        BMP):</label>
+                    <div class="control">
+                        <input class="input" type="file" name="img"
+                            accept="image/gif, image/jpeg, image/png, image/jpg, image/webp, image/svg+xml, image/apng, image/avif, image/bmp"
+                            required>
+                    </div>
+                </div>
+                <div class="field">
+                    <div class="control">
+                        <button class="button is-primary" type="submit">Upload</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div id="message"></div>
+        <div id="uploadedImageSection">
+            <!-- The section to display the uploaded image's URL -->
+        </div>
+    </div>
+</section>
 
-<div id="message"></div>
-<div id="uploadedImageSection">
-    <!-- The section to display the uploaded image's URL -->
-</div>
 <script src="/assets/upload.js"></script>
 {% endblock %}

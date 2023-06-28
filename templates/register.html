@@ -1,30 +1,62 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Register</h1>
-<form id="registerForm" action="/api/auth/register" method="POST">
-    <input type="text" name="username" placeholder="Username" required>
-    <input type="email" name="email" placeholder="Email" required>
-    <input type="password" name="password" placeholder="Password" required>
-    <input type="password" name="confirm_password" placeholder="Confirm Password" required>
-    <button type="submit">Register</button>
-    <div id="message"></div>
-</form>
+<section class="section">
+    <div class="container">
+        <div class="columns is-centered">
+            <div class="column is-half">
+                <h1 class="title has-text-centered">Register</h1>
+                <form id="registerForm" class="form">
+                    <div class="field">
+                        <div class="control">
+                            <input class="input" type="text" name="username" placeholder="Username" required>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <input class="input" type="email" name="email" placeholder="Email" required>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <input class="input" type="password" name="password" placeholder="Password" required>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <input class="input" type="password" name="confirm_password" placeholder="Confirm Password"
+                                required>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <button class="button is-primary" type="submit">Register</button>
+                        </div>
+                    </div>
+                </form>
+                <div id="message" class="has-text-centered"></div>
+            </div>
+        </div>
+    </div>
+</section>
+
 <script>
     const registerForm = document.getElementById("registerForm");
+    const message = document.getElementById("message");
+
     registerForm.addEventListener("submit", async (e) => {
         e.preventDefault();
-        // get the password and confirm password values
+
         const password = registerForm.password.value;
         const confirmPassword = registerForm.confirm_password.value;
-        // check if the passwords match
+
         if (password !== confirmPassword) {
             message.innerHTML = "Passwords do not match.";
             return;
         }
-        // create a new URLSearchParams object
+
         const formData = new URLSearchParams(new FormData(registerForm));
-        // send a fetch request to /api/auth/register with the form data
+
         const response = await fetch("/api/auth/register", {
             method: "POST",
             headers: {
@@ -34,17 +66,13 @@
         });
 
         const data = await response.json();
-        if (response.ok) {
-            if (data.status === "success") {
-                const token = data.jwt_token;
-                // Handle successful sign-in (e.g., redirect to dashboard)
-                // Show a  message  saying successful registration 
-                message.innerHTML = "<span>Registration successful. Please sign in.</span>";
-                // show a link to the sign in page
-                message.innerHTML += `<br><a href="/signin">Sign In</a>`;
-            }
+
+        if (response.ok && data.status === "success") {
+            message.innerHTML = "<span>Registration successful. Please sign in.</span>";
+            message.innerHTML += `<br><a href="/login">Sign In</a>`;
+        } else {
+            message.innerHTML = `<span>${data.message}</span>`;
         }
-        message.innerHTML = `<span>${data.message}</span>`;
-    })
+    });
 </script>
 {% endblock %}

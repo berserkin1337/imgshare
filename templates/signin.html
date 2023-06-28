@@ -1,36 +1,58 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Sign In</h1>
-<form id="signinForm" action="/api/auth/login" method="POST">
-    <input type="text" name="email" placeholder="Email" required>
-    <input type="password" name="password" placeholder="Password" required>
-    <button type="submit">Sign In</button>
-</form>
-<div id="message"></div>
-<script>
-    const signinForm = document.getElementById("signinForm");
-    const message = document.getElementById("message");
+<section class="section">
+    <div class="container">
+        <div class="columns is-centered">
+            <div class="column is-half">
+                <h1 class="title">Sign In</h1>
+                <form id="signinForm" action="/api/auth/login" method="POST">
+                    <div class="field">
+                        <label class="label">Email</label>
+                        <div class="control">
+                            <input class="input" type="email" name="email" placeholder="Email" required>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <label class="label">Password</label>
+                        <div class="control">
+                            <input class="input" type="password" name="password" placeholder="Password" required>
+                        </div>
+                    </div>
+                    <div class="field">
+                        <div class="control">
+                            <button class="button is-primary" type="submit">Sign In</button>
+                        </div>
+                    </div>
+                </form>
+                <div id="message" class="notification"></div>
+                <script>
+                    const signinForm = document.getElementById("signinForm");
+                    const message = document.getElementById("message");
 
-    signinForm.addEventListener("submit", async (e) => {
-        e.preventDefault();
+                    signinForm.addEventListener("submit", async (e) => {
+                        e.preventDefault();
 
-        const formData = new URLSearchParams(new FormData(signinForm));
-        const response = await fetch("/api/auth/login", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-            },
-            body: formData,
-        });
+                        const formData = new URLSearchParams(new FormData(signinForm));
+                        const response = await fetch("/api/auth/login", {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/x-www-form-urlencoded",
+                            },
+                            body: formData,
+                        });
 
-        const data = await response.json();
-        if (response.ok && data.status === "success") {
-            const token = data.jwt_token;
-            // Handle successful sign-in (e.g., redirect to dashboard)
-            window.location.href = "/";
-        }
-        message.innerHTML = `<span>${data.message}</span>`;
-    });
-</script>
+                        const data = await response.json();
+                        if (response.ok && data.status === "success") {
+                            const token = data.jwt_token;
+                            // Handle successful sign-in (e.g., redirect to dashboard)
+                            window.location.href = "/";
+                        }
+                        message.innerHTML = `<span>${data.message}</span>`;
+                    });
+                </script>
+            </div>
+        </div>
+    </div>
+</section>
 {% endblock %}
